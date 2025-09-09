@@ -10,13 +10,15 @@
 
   <h1 class="text-3xl font-bold mb-4">Movie Catalog</h1>
 
+  <!-- Add/Edit Form -->
   <form id="movieForm" class="mb-4 space-y-2 text-black">
-    <input type="text" name="title" placeholder="Title" class="input" required>
-    <input type="text" name="director" placeholder="Director" class="input" required>
-    <input type="text" name="genre" placeholder="Genre" class="input">
-    <input type="number" name="release_year" placeholder="Release Year" class="input">
-    <input type="number" step="0.1" name="rating" placeholder="Rating" class="input">
-    <button type="submit" class="btn-primary">Add Movie</button>
+    <input type="hidden" name="id" id="movieId"> <!-- hidden field for editing -->
+    <input type="text" name="title" id="title" placeholder="Title" class="input" required>
+    <input type="text" name="director" id="director" placeholder="Director" class="input" required>
+    <input type="text" name="genre" id="genre" placeholder="Genre" class="input">
+    <input type="number" name="release_year" id="release_year" placeholder="Release Year" class="input">
+    <input type="number" step="0.1" name="rating" id="rating" placeholder="Rating" class="input">
+    <button type="submit" class="btn-primary" id="submitBtn">Add Movie</button>
   </form>
 
   <!-- Movie list -->
@@ -27,6 +29,7 @@
 
     const form = document.getElementById('movieForm');
     const moviesList = document.getElementById('moviesList');
+    const submitBtn = document.getElementById('submitBtn');
 
     async function fetchMovies() {
       const res = await fetch(API_URL);
@@ -34,23 +37,43 @@
       moviesList.innerHTML = movies.map(m => `
         <div class="bg-gray-800 p-3 rounded flex justify-between items-center">
           <div>
-            <strong>${m.title}</strong> (${m.release_year}) - ${m.director}
+            <strong>${m.title}</strong> (${m.release_year || 'N/A'}) - ${m.director}
           </div>
-          <button onclick="deleteMovie(${m.id})" class="bg-red-600 px-2 py-1 rounded">Delete</button>
+          <div class="space-x-2">
+            <button onclick="editMovie(${m.id}, '${m.title}', '${m.director}', '${m.genre}', ${m.release_year || 'null'}, ${m.rating || 'null'})" 
+              class="bg-blue-600 px-2 py-1 rounded">Edit</button>
+            <button onclick="deleteMovie(${m.id})" 
+              class="bg-red-600 px-2 py-1 rounded">Delete</button>
+          </div>
         </div>
       `).join('');
     }
 
-    // Add a new movie
+    // Add or Update a movie
     form.addEventListener('submit', async e => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(form));
-      await fetch(API_URL, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(data)
-      });
+      const id = data.id;
+
+      if (id) {
+        // Update
+        await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+      } else {
+        // Create
+        await fetch(API_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(data)
+        });
+      }
+
       form.reset();
+      document.getElementById('movieId').value = "";
+      submitBtn.textContent = "Add Movie";
       fetchMovies();
     });
 
@@ -58,6 +81,17 @@
     async function deleteMovie(id) {
       await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
       fetchMovies();
+    }
+
+    // edit a movie (fill form with existing data)
+    function editMovie(id, title, director, genre, release_year, rating) {
+      document.getElementById('movieId').value = id;
+      document.getElementById('title').value = title;
+      document.getElementById('director').value = director;
+      document.getElementById('genre').value = genre;
+      document.getElementById('release_year').value = release_year || "";
+      document.getElementById('rating').value = rating || "";
+      submitBtn.textContent = "Update Movie";
     }
 
     fetchMovies();

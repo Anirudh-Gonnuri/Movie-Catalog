@@ -51,7 +51,7 @@ app.post('/movies', async (req, res) => {
   }
 });
 
-// PUT /movies/:id
+// update movie by id
 app.put('/movies/:id', async (req, res) => {
   const { id } = req.params;
   const { title, director, genre, release_year, rating } = req.body;
@@ -66,7 +66,7 @@ app.put('/movies/:id', async (req, res) => {
   }
 });
 
-// DELETE /movies/:id
+// delete movie by id
 app.delete('/movies/:id', async (req, res) => {
   const { id } = req.params;
   try {
