@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Catalog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-6">
+
+  <h1 class="text-3xl font-bold mb-4">Movie Catalog</h1>
+
+  <form id="movieForm" class="mb-4 space-y-2 text-black">
+    <input type="text" name="title" placeholder="Title" class="input" required>
+    <input type="text" name="director" placeholder="Director" class="input" required>
+    <input type="text" name="genre" placeholder="Genre" class="input">
+    <input type="number" name="release_year" placeholder="Release Year" class="input">
+    <input type="number" step="0.1" name="rating" placeholder="Rating" class="input">
+    <button type="submit" class="btn-primary">Add Movie</button>
+  </form>
+
+  <!-- Movie list -->
+  <div id="moviesList" class="grid gap-2"></div>
+
+  <script>
+    const API_URL = '/movies';
+
+    const form = document.getElementById('movieForm');
+    const moviesList = document.getElementById('moviesList');
+
+    async function fetchMovies() {
+      const res = await fetch(API_URL);
+      const movies = await res.json();
+      moviesList.innerHTML = movies.map(m => `
+        <div class="bg-gray-800 p-3 rounded flex justify-between items-center">
+          <div>
+            <strong>${m.title}</strong> (${m.release_year}) - ${m.director}
+          </div>
+          <button onclick="deleteMovie(${m.id})" class="bg-red-600 px-2 py-1 rounded">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    // Add a new movie
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      });
+      form.reset();
+      fetchMovies();
+    });
+
+    // delete a movie
+    async function deleteMovie(id) {
+      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      fetchMovies();
+    }
+
+    fetchMovies();
+  </script>
+
+</body>
+</html>
